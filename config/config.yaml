@@ -1,0 +1,35 @@
+# homelab-helper configuration
+# Volume-mounted into the container at /config/config.yaml
+# Edit this file to match your homelab setup.
+
+homelab:
+  name: "nightjar homelab"
+
+traefik:
+  network: "reverse-proxy"
+  cert_resolver: "cloudflare"
+  entrypoint: "websecure"
+  # Name of your auth forward-auth middleware.
+  # Omit or set to "" to hide the auth checkbox in the UI.
+  auth_middleware: "tinyauth@file"
+
+# List of domains you own. The first entry is the default in the form.
+domains:
+  - nightjar.cc
+  - togneri.net
+
+autokuma:
+  # Set to true if AutoKuma is running on your host.
+  # AutoKuma reads kuma.* labels from containers and creates Uptime Kuma monitors automatically.
+  enabled: true
+
+homepage:
+  # Set to true if you use the Homepage dashboard.
+  enabled: true
+  groups:
+    - Infrastructure
+    - Monitoring
+    - Media
+    - Utilities
+    - Networking
+    - Download

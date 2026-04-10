@@ -469,8 +469,74 @@ const SCAN = {{ scan_json | safe }};
       </div>
     </div>
 
-    <!-- ── Step 6: Review & create ────────────────────────────────────────── -->
+    <!-- ── Step 6: Sandbox ──────────────────────────────────────────────────── -->
     <div class="step" id="step-6">
+      <div class="step-title">Sandbox</div>
+      <div class="step-desc">
+        The sandbox tab lets you try any Docker image in a temporary container before committing
+        it to your stack. Configure isolation and resource limits here.
+      </div>
+
+      <label class="toggle-row" for="sandbox_enabled">
+        <input type="checkbox" id="sandbox_enabled" checked onchange="toggleSub('sandbox_enabled', 'sandbox-security-sub')">
+        <div>
+          <div class="toggle-label">Enable sandbox feature</div>
+          <div class="toggle-desc">Allows launching temporary containers from any image. Requires Docker socket access.</div>
+        </div>
+      </label>
+
+      <div class="toggle-sub" id="sandbox-security-sub" style="padding-top:12px;">
+        <div class="field">
+          <label>Sandbox network name <span class="hint">(created automatically, separate from your production network)</span></label>
+          <input type="text" id="sandbox_network" value="sandbox-net" placeholder="sandbox-net">
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:6px;">
+            <input type="checkbox" id="sandbox_cap_drop" checked style="margin-top:3px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;" onchange="document.getElementById('cap-warn').classList.toggle('hidden', this.checked)">
+            <div>
+              <div style="font-size:13px;font-weight:600;">Drop all Linux capabilities <span style="color:var(--green);font-size:11px;font-weight:400;">Recommended</span></div>
+              <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">Prevents sandbox containers from using privileged kernel operations.</div>
+            </div>
+          </div>
+          <div id="cap-warn" class="hidden" style="color:var(--yellow);font-size:12px;padding:6px 10px;background:var(--bg);border-radius:4px;border:1px solid var(--yellow);">
+            Sandbox containers will run with full Linux capabilities. Only disable this if your images specifically require them.
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:6px;">
+            <input type="checkbox" id="sandbox_no_new_priv" checked style="margin-top:3px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;" onchange="document.getElementById('priv-warn').classList.toggle('hidden', this.checked)">
+            <div>
+              <div style="font-size:13px;font-weight:600;">No new privileges <span style="color:var(--green);font-size:11px;font-weight:400;">Recommended</span></div>
+              <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">Prevents privilege escalation via setuid binaries inside containers.</div>
+            </div>
+          </div>
+          <div id="priv-warn" class="hidden" style="color:var(--yellow);font-size:12px;padding:6px 10px;background:var(--bg);border-radius:4px;border:1px solid var(--yellow);">
+            Sandbox containers may escalate privileges via setuid binaries inside the image.
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Memory limit per container <span class="hint">(e.g. 512m, 1g &mdash; leave blank for no limit)</span></label>
+          <input type="text" id="sandbox_memory" value="512m" placeholder="512m" oninput="document.getElementById('mem-warn').classList.toggle('hidden', !!this.value.trim())">
+          <div id="mem-warn" class="hidden" style="color:var(--yellow);font-size:12px;margin-top:4px;padding:4px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--yellow);">
+            No memory limit &mdash; a runaway container can exhaust host memory.
+          </div>
+        </div>
+
+        <div class="field">
+          <label>CPU limit per container <span class="hint">(cores, e.g. 1.0 &mdash; leave blank or 0 for no limit)</span></label>
+          <input type="text" id="sandbox_cpu" value="1.0" placeholder="1.0" oninput="document.getElementById('cpu-warn').classList.toggle('hidden', parseFloat(this.value) > 0)">
+          <div id="cpu-warn" class="hidden" style="color:var(--yellow);font-size:12px;margin-top:4px;padding:4px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--yellow);">
+            No CPU limit &mdash; a runaway container can exhaust host CPU.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Step 7: Review & create ────────────────────────────────────────── -->
+    <div class="step" id="step-7">
       <div class="step-title">Review &amp; create</div>
       <div class="step-desc">
         This is the config that will be written to <code>config.yaml</code>.
@@ -491,8 +557,8 @@ const SCAN = {{ scan_json | safe }};
 </div>
 
 <script>
-const STEP_LABELS = ['Scan', 'Identity', 'Domains', 'Traefik', 'Integrations', 'Review'];
-const TOTAL_STEPS = 6;
+const STEP_LABELS = ['Scan', 'Identity', 'Domains', 'Traefik', 'Integrations', 'Sandbox', 'Review'];
+const TOTAL_STEPS = 7;
 let currentStep = 1;
 
 // ── Progress bar ───────────────────────────────────────────────────────────────
@@ -519,13 +585,13 @@ function showStep(n) {
   document.getElementById('step-' + n).classList.add('active');
   document.getElementById('btn-back').disabled = n === 1;
   document.getElementById('btn-next').textContent = n === TOTAL_STEPS ? 'Create config' : 'Next';
+  if (n === TOTAL_STEPS) buildYamlPreview();
   buildProgress();
 }
 
 function nextStep() {
   if (!validateStep(currentStep)) return;
   if (currentStep === TOTAL_STEPS) { createConfig(); return; }
-  if (currentStep === TOTAL_STEPS - 1) buildYamlPreview();
   currentStep++;
   showStep(currentStep);
 }
@@ -597,7 +663,6 @@ function toggleSub(checkId, subId) {
 function buildYamlPreview() {
   const data = collectFormData();
   const groups = data.homepage.groups;
-  const ttlOpts = [1, 4, 8, 24];
 
   let yaml = `homelab:\n  name: "${data.homelab_name}"\n\n`;
 
@@ -622,7 +687,16 @@ function buildYamlPreview() {
   }
   yaml += '\n';
 
-  yaml += `sandbox:\n  default_ttl_hours: 4\n  max_sandboxes: 10\n  ttl_options: [1, 4, 8, 24]\n\n`;
+  yaml += `sandbox:\n`;
+  yaml += `  enabled: ${data.sandbox_enabled}\n`;
+  yaml += `  network: "${data.sandbox_network}"\n`;
+  yaml += `  cap_drop_all: ${data.sandbox_cap_drop_all}\n`;
+  yaml += `  no_new_privileges: ${data.sandbox_no_new_privileges}\n`;
+  if (data.sandbox_memory_limit)
+    yaml += `  memory_limit: "${data.sandbox_memory_limit}"\n`;
+  if (data.sandbox_cpu_limit > 0)
+    yaml += `  cpu_limit: ${data.sandbox_cpu_limit}\n`;
+  yaml += `  default_ttl_hours: 4\n  max_sandboxes: 10\n  ttl_options: [1, 4, 8, 24]\n\n`;
 
   yaml += `security:\n  suppress_auth_warning: false\n`;
 
@@ -631,6 +705,8 @@ function buildYamlPreview() {
 
 // ── Collect all form data ──────────────────────────────────────────────────────
 function collectFormData() {
+  const sandboxEnabled = document.getElementById('sandbox_enabled')?.checked !== false;
+  const cpuRaw = parseFloat(document.getElementById('sandbox_cpu')?.value) || 0;
   return {
     homelab_name: document.getElementById('homelab_name').value.trim() || 'My Homelab',
     domains: collectRows('domain-rows'),
@@ -645,6 +721,12 @@ function collectFormData() {
       enabled: document.getElementById('homepage_enabled').checked,
       groups:  collectRows('group-rows'),
     },
+    sandbox_enabled:          sandboxEnabled,
+    sandbox_network:          document.getElementById('sandbox_network')?.value.trim() || 'sandbox-net',
+    sandbox_cap_drop_all:     document.getElementById('sandbox_cap_drop')?.checked !== false,
+    sandbox_no_new_privileges: document.getElementById('sandbox_no_new_priv')?.checked !== false,
+    sandbox_memory_limit:     document.getElementById('sandbox_memory')?.value.trim() || '',
+    sandbox_cpu_limit:        cpuRaw,
   };
 }
 

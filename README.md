@@ -96,14 +96,34 @@ security:
 
 ## Sandbox feature
 
-The sandbox tab lets you launch any Docker image as a temporary container on a random host port. Containers expire automatically after the configured TTL.
+The sandbox tab lets you launch any Docker image as a temporary container. Containers expire automatically after the configured TTL.
 
 When you are ready to add the service permanently, click **Promote** on the sandbox card. The editor opens pre-filled with the image, exposed port, and any non-system environment variables from the running container. Edit the fields and generate the compose snippet as normal.
 
 Sandbox containers are run with `ALLOWED_HOSTS=*` injected automatically, which avoids host-validation errors in frameworks like Django.
 
-## Security note
+## Security
 
-homelab-helper has access to the Docker socket and can launch arbitrary containers. It has no built-in authentication. Put it behind your reverse proxy with an auth middleware (TinyAuth, Authelia, etc.) before exposing it on your network.
+### Authentication
 
-Set `security.suppress_auth_warning: true` in `config.yaml` to dismiss the warning banner once auth is in place.
+homelab-helper has no built-in authentication. Put it behind your reverse proxy with an auth middleware (TinyAuth, Authelia, etc.) before exposing it on your network. Set `security.suppress_auth_warning: true` in `config.yaml` to dismiss the warning banner once auth is in place.
+
+### Docker socket
+
+The container requires access to the Docker socket, which grants root-equivalent access to the host. This is unavoidable for the sandbox feature. Run it only on trusted networks.
+
+### Sandbox hardening
+
+By default, sandbox containers are launched with:
+
+- **Network isolation** — containers are placed on a dedicated `sandbox-net` network rather than your production reverse-proxy network. Traefik is automatically connected to `sandbox-net` so it can still route traffic to sandboxes. This prevents sandbox containers from reaching other homelab services.
+- **Cap drop: ALL** — all Linux capabilities are dropped.
+- **No new privileges** — privilege escalation via setuid binaries is blocked.
+- **Memory limit: 512m** — per-container memory cap.
+- **CPU limit: 1.0** — per-container CPU cap.
+
+All of these are configurable in `config.yaml` under the `sandbox:` key. Relaxing them is possible but each carries a risk that is displayed as an amber warning in the sandbox UI and in the setup wizard. The sandbox feature can be disabled entirely with `sandbox.enabled: false`.
+
+### Shared service network
+
+The New Service generator puts all services on the shared Traefik network (default: `reverse-proxy`). Containers on this network can reach each other by container name on any port, including ports not published to the host. If you want stronger isolation between production services, use a per-service internal network in addition to the shared routing network — this is a manual step outside the scope of the generator.

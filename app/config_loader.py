@@ -13,6 +13,12 @@ DEFAULTS = {
     "autokuma": {"enabled": False},
     "homepage": {"enabled": False, "groups": []},
     "sandbox": {
+        "enabled": True,
+        "network": "sandbox-net",
+        "cap_drop_all": True,
+        "no_new_privileges": True,
+        "memory_limit": "512m",
+        "cpu_limit": 1.0,
         "default_ttl_hours": 4,
         "max_sandboxes": 10,
         "ttl_options": [1, 4, 8, 24],
@@ -60,7 +66,26 @@ def load_config():
     ttl_options = sb.get("ttl_options", dsb["ttl_options"])
     if not isinstance(ttl_options, list) or not ttl_options:
         ttl_options = dsb["ttl_options"]
+
+    mem_raw = sb.get("memory_limit")
+    if mem_raw is None:
+        mem = dsb["memory_limit"]
+    else:
+        mem = str(mem_raw).strip()  # empty string means "no limit"
+
+    cpu_raw = sb.get("cpu_limit")
+    try:
+        cpu = float(cpu_raw) if cpu_raw not in (None, "") else 0.0
+    except (ValueError, TypeError):
+        cpu = dsb["cpu_limit"]
+
     cfg["sandbox"] = {
+        "enabled": bool(sb.get("enabled", dsb["enabled"])),
+        "network": str(sb.get("network", dsb["network"])).strip() or dsb["network"],
+        "cap_drop_all": bool(sb.get("cap_drop_all", dsb["cap_drop_all"])),
+        "no_new_privileges": bool(sb.get("no_new_privileges", dsb["no_new_privileges"])),
+        "memory_limit": mem,
+        "cpu_limit": cpu,
         "default_ttl_hours": int(sb.get("default_ttl_hours", dsb["default_ttl_hours"])),
         "max_sandboxes": int(sb.get("max_sandboxes", dsb["max_sandboxes"])),
         "ttl_options": ttl_options,

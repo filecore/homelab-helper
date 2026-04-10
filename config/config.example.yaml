@@ -32,6 +32,28 @@ homepage:
     - Utilities
 
 sandbox:
+  # Set to false to disable the sandbox tab entirely.
+  enabled: true
+
+  # Dedicated Docker network for sandbox containers (created automatically).
+  # Keep this different from your production reverse-proxy network so that
+  # sandbox containers cannot reach other homelab services.
+  network: "sandbox-net"
+
+  # Drop all Linux capabilities from sandbox containers. Recommended.
+  cap_drop_all: true
+
+  # Prevent privilege escalation via setuid binaries. Recommended.
+  no_new_privileges: true
+
+  # Per-container memory cap (e.g. "512m", "1g"). Leave blank for no limit.
+  # WARNING: no limit means a runaway container can exhaust host memory.
+  memory_limit: "512m"
+
+  # Per-container CPU cap in cores (e.g. 1.0). Set to 0 for no limit.
+  # WARNING: no limit means a runaway container can exhaust host CPU.
+  cpu_limit: 1.0
+
   # Default TTL shown in the sandbox create form (hours)
   default_ttl_hours: 4
   # Hard limit on concurrent sandboxes

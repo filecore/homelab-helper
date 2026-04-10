@@ -12,6 +12,10 @@ app = Flask(__name__)
 CONFIG_PATH = os.environ.get("CONFIG_PATH", "/config/config.yaml")
 
 
+def _sandbox_enabled():
+    return load_config()["sandbox"].get("enabled", True)
+
+
 @app.route("/")
 def index():
     if not os.path.exists(CONFIG_PATH):
@@ -64,6 +68,18 @@ def api_setup():
     if isinstance(homepage_groups, str):
         homepage_groups = [g.strip() for g in homepage_groups.split(",") if g.strip()]
 
+    sandbox_enabled = bool(data.get("sandbox_enabled", True))
+    sandbox_network = (data.get("sandbox_network") or "sandbox-net").strip()
+    sandbox_cap_drop = bool(data.get("sandbox_cap_drop_all", True))
+    sandbox_no_priv = bool(data.get("sandbox_no_new_privileges", True))
+    sandbox_memory = (data.get("sandbox_memory_limit") or "512m").strip()
+    try:
+        sandbox_cpu = float(data.get("sandbox_cpu_limit") or 1.0)
+        if sandbox_cpu < 0:
+            sandbox_cpu = 0.0
+    except (ValueError, TypeError):
+        sandbox_cpu = 1.0
+
     cfg = {
         "homelab": {"name": homelab_name},
         "traefik": {
@@ -78,6 +94,12 @@ def api_setup():
             "groups": homepage_groups,
         },
         "sandbox": {
+            "enabled": sandbox_enabled,
+            "network": sandbox_network,
+            "cap_drop_all": sandbox_cap_drop,
+            "no_new_privileges": sandbox_no_priv,
+            "memory_limit": sandbox_memory,
+            "cpu_limit": sandbox_cpu,
             "default_ttl_hours": 4,
             "max_sandboxes": 10,
             "ttl_options": [1, 4, 8, 24],
@@ -101,11 +123,16 @@ def api_setup():
 
 @app.route("/api/sandboxes")
 def api_list():
+    if not _sandbox_enabled():
+        return jsonify([])
     return jsonify(sm.list_sandboxes())
 
 
 @app.route("/api/sandboxes", methods=["POST"])
 def api_create():
+    if not _sandbox_enabled():
+        return jsonify({"error": "Sandbox feature is disabled."}), 403
+
     data = request.get_json(force=True) or {}
     cfg = load_config()
 
@@ -146,6 +173,8 @@ def api_create():
 
 @app.route("/api/sandboxes/<sid>", methods=["DELETE"])
 def api_destroy(sid):
+    if not _sandbox_enabled():
+        return jsonify({"error": "Sandbox feature is disabled."}), 403
     ok = sm.destroy_sandbox(sid)
     if not ok:
         return jsonify({"error": "Sandbox not found."}), 404
@@ -154,6 +183,8 @@ def api_destroy(sid):
 
 @app.route("/api/sandboxes/<sid>/promote")
 def api_promote(sid):
+    if not _sandbox_enabled():
+        return jsonify({"error": "Sandbox feature is disabled."}), 403
     data = sm.get_promote_data(sid)
     if not data:
         return jsonify({"error": "Sandbox not found."}), 404

@@ -119,6 +119,26 @@ header .tagline { color: var(--text-dim); font-size: 12px; }
   margin-bottom: 4px;
 }
 
+.sandbox-security-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.sec-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  cursor: default;
+}
+
+.sec-pill.ok   { background: #1a2e1a; border: 1px solid var(--green);  color: var(--green); }
+.sec-pill.warn { background: #2a2010; border: 1px solid var(--yellow); color: var(--yellow); }
+
 .sandbox-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -549,6 +569,7 @@ const CONFIG = {{ config_json | safe }};
 
     <!-- Right: sandbox list -->
     <div class="sandbox-list-panel" id="sandbox-list-panel">
+      <div class="sandbox-security-bar" id="sandbox-security-bar"></div>
       <div class="sandbox-count" id="sandbox-count"></div>
       <div id="sandbox-list">
         <div class="sandbox-empty">No active sandboxes.</div>
@@ -769,9 +790,53 @@ function showTab(tab) {
   if (!CONFIG.homepage?.enabled) document.getElementById('hp-section').style.display = 'none';
   if (!CONFIG.traefik?.auth_middleware) document.getElementById('auth').closest('.checkbox-row').style.display = 'none';
 
-  loadSandboxes();
-  setInterval(loadSandboxes, 10000);
+  if (CONFIG.sandbox?.enabled === false) {
+    // Sandbox disabled in config — grey out the create panel and show a message
+    const createPanel = document.querySelector('.sandbox-create-panel');
+    createPanel.style.opacity = '0.45';
+    createPanel.style.pointerEvents = 'none';
+    document.getElementById('sandbox-list').innerHTML =
+      '<div class="sandbox-empty">Sandbox feature is disabled.<br><span style="font-size:12px;color:var(--text-dim)">Set <code>sandbox.enabled: true</code> in config.yaml to enable it.</span></div>';
+    document.getElementById('sandbox-count').textContent = '';
+  } else {
+    buildSandboxSecurityBar();
+    loadSandboxes();
+    setInterval(loadSandboxes, 10000);
+  }
 })();
+
+// ── Sandbox security bar ───────────────────────────────────────────────────────
+function buildSandboxSecurityBar() {
+  const bar = document.getElementById('sandbox-security-bar');
+  if (!bar) return;
+  const sb = CONFIG.sandbox || {};
+  const traefik = CONFIG.traefik || {};
+
+  function pill(ok, text, tip) {
+    return `<span class="sec-pill ${ok ? 'ok' : 'warn'}" title="${_esc(tip)}">${text}</span>`;
+  }
+
+  const sandboxNet = sb.network || 'sandbox-net';
+  const proxyNet   = traefik.network || 'reverse-proxy';
+  const isolated   = sandboxNet !== proxyNet;
+
+  const pills = [
+    isolated
+      ? pill(true,  `Net: ${sandboxNet}`, 'Sandbox containers are on a dedicated network, isolated from your production stack.')
+      : pill(false, `Net: ${sandboxNet} (shared)`, 'Sandbox network is the same as your production network. Containers can reach other homelab services.'),
+    sb.cap_drop_all !== false
+      ? pill(true,  'Cap drop: ALL', 'Linux capabilities are dropped for sandbox containers.')
+      : pill(false, 'Caps: full', 'Sandbox containers run with full Linux capabilities. Set sandbox.cap_drop_all: true to harden.'),
+    sb.memory_limit
+      ? pill(true,  `Mem: ${sb.memory_limit}`, `Sandbox containers are limited to ${sb.memory_limit} of memory.`)
+      : pill(false, 'Mem: unlimited', 'No memory limit. A runaway container can exhaust host memory. Set sandbox.memory_limit in config.yaml.'),
+    sb.cpu_limit > 0
+      ? pill(true,  `CPU: ${sb.cpu_limit}`, `Sandbox containers are limited to ${sb.cpu_limit} CPU core(s).`)
+      : pill(false, 'CPU: unlimited', 'No CPU limit. A runaway container can exhaust host CPU. Set sandbox.cpu_limit in config.yaml.'),
+  ];
+
+  bar.innerHTML = pills.join('');
+}
 
 // ── Sandbox env rows ───────────────────────────────────────────────────────────
 function sbAddEnvRow(k, v) {

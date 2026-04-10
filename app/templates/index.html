@@ -20,7 +20,8 @@
   --red: #e05c5c;
   --yellow: #d4a843;
   --radius: 8px;
-  --font: 'Consolas', 'Monaco', 'Courier New', monospace;
+  --font: 'Arial', 'Helvetica Neue', Helvetica, sans-serif;
+  --mono: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 body {
@@ -32,6 +33,22 @@ body {
   min-height: 100vh;
 }
 
+/* ── Auth warning ─────────────────────────────────────────────────────────── */
+.auth-warning {
+  background: #2a1010;
+  border-bottom: 2px solid var(--red);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-warning::before { content: "!"; font-weight: 800; font-size: 15px; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
 header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -41,23 +58,153 @@ header {
   gap: 12px;
 }
 
-header h1 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.04em;
+header h1 { font-size: 16px; font-weight: 700; color: var(--accent); }
+header .tagline { color: var(--text-dim); font-size: 12px; }
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  gap: 4px;
 }
 
-header .tagline {
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
   color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-content { display: none; }
+.tab-content.active { display: flex; flex-direction: column; }
+
+/* ── Sandboxes tab ────────────────────────────────────────────────────────── */
+.sandbox-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100vh - 104px);
+}
+
+.sandbox-create-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.sandbox-list-panel {
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sandbox-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.sandbox-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sandbox-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sandbox-image { font-weight: 600; font-size: 14px; }
+
+.sandbox-actions { display: flex; gap: 6px; }
+
+.btn-promote {
+  background: var(--accent-dim);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  transition: background 0.15s;
+}
+
+.btn-promote:hover { background: var(--accent); }
+
+.btn-destroy {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 4px 10px;
+  transition: all 0.15s;
+}
+
+.btn-destroy:hover { border-color: var(--red); color: var(--red); }
+
+.sandbox-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
   font-size: 12px;
 }
 
-.container {
+.sandbox-meta-item { display: flex; flex-direction: column; gap: 1px; }
+.sandbox-meta-label { color: var(--text-dim); font-size: 11px; }
+
+.sandbox-url a {
+  color: var(--accent);
+  font-size: 12px;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.sandbox-url a:hover { text-decoration: underline; }
+
+.sandbox-expires { font-size: 12px; }
+.sandbox-expires.soon { color: var(--yellow); }
+.sandbox-expires.expired { color: var(--red); }
+
+.sandbox-empty {
+  color: var(--text-dim);
+  font-size: 13px;
+  opacity: 0.5;
+  padding: 40px 0;
+  text-align: center;
+}
+
+/* ── New Service tab ──────────────────────────────────────────────────────── */
+.editor-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 400px 1fr;
   gap: 0;
-  height: calc(100vh - 53px);
+  height: calc(100vh - 104px);
 }
 
 .form-panel {
@@ -75,13 +222,12 @@ header .tagline {
   gap: 16px;
 }
 
-.section {
-  margin-bottom: 20px;
-}
+/* ── Shared form elements ─────────────────────────────────────────────────── */
+.section { margin-bottom: 20px; }
 
 .section-title {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -90,9 +236,7 @@ header .tagline {
   border-bottom: 1px solid var(--border);
 }
 
-.field {
-  margin-bottom: 12px;
-}
+.field { margin-bottom: 12px; }
 
 label {
   display: block;
@@ -101,12 +245,7 @@ label {
   margin-bottom: 4px;
 }
 
-label .hint {
-  font-size: 11px;
-  color: var(--text-dim);
-  opacity: 0.6;
-  font-style: italic;
-}
+label .hint { font-size: 11px; opacity: 0.6; font-style: italic; }
 
 input[type=text], input[type=number], select {
   width: 100%;
@@ -125,9 +264,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus {
   border-color: var(--accent);
 }
 
-select option {
-  background: var(--surface);
-}
+select option { background: var(--surface); }
 
 .checkbox-row {
   display: flex;
@@ -143,12 +280,7 @@ select option {
   cursor: pointer;
 }
 
-.checkbox-row label {
-  margin: 0;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text);
-}
+.checkbox-row label { margin: 0; cursor: pointer; font-size: 13px; color: var(--text); }
 
 .subsection {
   padding: 12px;
@@ -158,11 +290,50 @@ select option {
   margin-top: 8px;
 }
 
-.subsection.hidden {
-  display: none;
+.subsection.hidden { display: none; }
+
+/* ── Environment variable editor ─────────────────────────────────────────── */
+.env-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+.env-row { display: flex; gap: 6px; align-items: center; }
+
+.env-row input[type=text] { font-family: var(--mono); font-size: 12px; }
+.env-row .env-key { width: 38%; }
+.env-row .env-val { flex: 1; }
+
+.btn-env-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 8px;
+  flex-shrink: 0;
+  transition: all 0.15s;
 }
 
-.btn-generate {
+.btn-env-remove:hover { border-color: var(--red); color: var(--red); }
+
+.btn-add-env {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 6px 10px;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.btn-add-env:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn-primary {
   width: 100%;
   padding: 10px;
   background: var(--accent);
@@ -171,35 +342,42 @@ select option {
   border-radius: var(--radius);
   font-family: var(--font);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  letter-spacing: 0.04em;
   transition: background 0.15s;
   margin-top: 8px;
 }
 
-.btn-generate:hover {
-  background: var(--accent-dim);
+.btn-primary:hover { background: var(--accent-dim); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 6px;
 }
 
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Output blocks ────────────────────────────────────────────────────────── */
 .errors {
   background: #2a1515;
   border: 1px solid var(--red);
   border-radius: var(--radius);
   padding: 10px 12px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
-.errors li {
-  color: var(--red);
-  font-size: 13px;
-  list-style: none;
-  padding: 2px 0;
-}
-
-.errors li::before {
-  content: "! ";
-}
+.errors li { color: var(--red); font-size: 13px; list-style: none; padding: 2px 0; }
+.errors li::before { content: "! "; }
 
 .output-block {
   background: var(--surface);
@@ -208,9 +386,7 @@ select option {
   overflow: hidden;
 }
 
-.output-block.hidden {
-  display: none;
-}
+.output-block.hidden { display: none; }
 
 .output-header {
   display: flex;
@@ -223,7 +399,7 @@ select option {
 
 .output-header .label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -241,19 +417,12 @@ select option {
   transition: all 0.15s;
 }
 
-.btn-copy:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.btn-copy.copied {
-  border-color: var(--green);
-  color: var(--green);
-}
+.btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+.btn-copy.copied { border-color: var(--green); color: var(--green); }
 
 pre {
   padding: 14px;
-  font-family: var(--font);
+  font-family: var(--mono);
   font-size: 12px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -262,11 +431,7 @@ pre {
   overflow-x: auto;
 }
 
-.checklist-list {
-  padding: 14px;
-  list-style: none;
-  counter-reset: checklist;
-}
+.checklist-list { padding: 14px; list-style: none; counter-reset: checklist; }
 
 .checklist-list li {
   counter-increment: checklist;
@@ -278,9 +443,7 @@ pre {
   line-height: 1.5;
 }
 
-.checklist-list li:last-child {
-  border-bottom: none;
-}
+.checklist-list li:last-child { border-bottom: none; }
 
 .checklist-list li::before {
   content: counter(checklist);
@@ -292,7 +455,7 @@ pre {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
   flex-shrink: 0;
   margin-top: 1px;
@@ -309,6 +472,16 @@ pre {
   text-align: center;
   line-height: 2;
 }
+
+.promoted-banner {
+  background: #1a2a1a;
+  border: 1px solid var(--green);
+  border-radius: var(--radius);
+  color: var(--green);
+  font-size: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
 </style>
 </head>
 <body>
@@ -317,216 +490,476 @@ pre {
 const CONFIG = {{ config_json | safe }};
 </script>
 
+{% if auth_warning %}
+<div class="auth-warning">
+  No built-in authentication &mdash; ensure this service is protected by your reverse proxy before exposing it on your network. Set <code>security.suppress_auth_warning: true</code> in config.yaml to dismiss.
+</div>
+{% endif %}
+
 <header>
   <h1>homelab-helper</h1>
-  <span class="tagline">/ service wizard / {{ homelab_name }}</span>
+  <span class="tagline">/ {{ homelab_name }}</span>
 </header>
 
-<div class="container">
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('sandboxes')">Sandboxes</button>
+  <button class="tab-btn" onclick="showTab('new-service')">New Service</button>
+</div>
 
-  <!-- LEFT: Form -->
-  <div class="form-panel">
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SANDBOXES TAB
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="tab-content active" id="tab-sandboxes">
+  <div class="sandbox-layout">
 
-    <div class="section">
-      <div class="section-title">Service Identity</div>
+    <!-- Left: create form -->
+    <div class="sandbox-create-panel">
+      <div class="section">
+        <div class="section-title">Launch Sandbox</div>
 
-      <div class="field">
-        <label>Service name <span class="hint">(lowercase, hyphens only)</span></label>
-        <input type="text" id="name" placeholder="my-service" oninput="onNameChange()">
+        <div class="field">
+          <label>Docker image</label>
+          <input type="text" id="sb-image" placeholder="vabene1111/recipes">
+        </div>
+
+        <div class="field">
+          <label>Internal port <span class="hint">(leave blank to auto-detect)</span></label>
+          <input type="number" id="sb-port" placeholder="8080" min="1" max="65535">
+        </div>
+
+        <div class="field">
+          <label>TTL</label>
+          <select id="sb-ttl"></select>
+        </div>
+
+        <div class="section-title" style="margin-top:16px">Environment variables</div>
+        <div class="env-rows" id="sb-env-rows"></div>
+        <button class="btn-add-env" onclick="sbAddEnvRow('','')">+ Add variable</button>
       </div>
 
-      <div class="field">
-        <label>Docker image</label>
-        <input type="text" id="image" placeholder="ghcr.io/author/image:latest">
-      </div>
-
-      <div class="field">
-        <label>Internal port <span class="hint">(leave blank to auto-detect)</span></label>
-        <input type="number" id="port" placeholder="8080" min="1" max="65535">
-      </div>
-
-      <div class="field">
-        <label>Domain</label>
-        <select id="domain" onchange="onDomainChange()">
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Subdomain override <span class="hint">(defaults to service name)</span></label>
-        <input type="text" id="subdomain_override" placeholder="" oninput="onSubdomainChange()">
-      </div>
+      <div id="sb-error" style="display:none;color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <button class="btn-primary" onclick="createSandbox()">Launch</button>
     </div>
 
-    <div class="section">
-      <div class="section-title">Traefik</div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="auth" checked>
-        <label for="auth">Auth protected</label>
-      </div>
-
-      <div class="field">
-        <label>Extra middlewares <span class="hint">(comma-separated, optional)</span></label>
-        <input type="text" id="extra_middlewares" placeholder="crowdsec@file,compress@file">
+    <!-- Right: sandbox list -->
+    <div class="sandbox-list-panel" id="sandbox-list-panel">
+      <div class="sandbox-count" id="sandbox-count"></div>
+      <div id="sandbox-list">
+        <div class="sandbox-empty">No active sandboxes.</div>
       </div>
     </div>
-
-    <!-- AutoKuma section -->
-    <div class="section" id="kuma-section">
-      <div class="section-title">Uptime Kuma (AutoKuma)</div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="kuma_enabled" checked onchange="toggleSubsection('kuma_enabled','kuma-sub')">
-        <label for="kuma_enabled">Add monitor</label>
-      </div>
-
-      <div class="subsection" id="kuma-sub">
-        <div class="field">
-          <label>Monitor type</label>
-          <select id="kuma_type">
-            <option value="https" selected>HTTPS</option>
-            <option value="http">HTTP</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Monitor URL</label>
-          <input type="text" id="kuma_url" placeholder="https://my-service.example.com">
-        </div>
-        <div class="field">
-          <label>Group <span class="hint">(optional)</span></label>
-          <input type="text" id="kuma_group" placeholder="Services">
-        </div>
-        <div class="field">
-          <label>Interval (seconds)</label>
-          <input type="number" id="kuma_interval" value="60" min="20">
-        </div>
-      </div>
-    </div>
-
-    <!-- Homepage section -->
-    <div class="section" id="hp-section">
-      <div class="section-title">Homepage Dashboard</div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="homepage_enabled" checked onchange="toggleSubsection('homepage_enabled','hp-sub')">
-        <label for="homepage_enabled">Add dashboard entry</label>
-      </div>
-
-      <div class="subsection" id="hp-sub">
-        <div class="field">
-          <label>Display name</label>
-          <input type="text" id="homepage_display_name" placeholder="">
-        </div>
-        <div class="field">
-          <label>Description <span class="hint">(optional)</span></label>
-          <input type="text" id="homepage_description" placeholder="Short description">
-        </div>
-        <div class="field">
-          <label>Group</label>
-          <select id="homepage_group">
-          </select>
-        </div>
-        <div class="field">
-          <label>Icon <span class="hint">(slug or URL, optional)</span></label>
-          <input type="text" id="homepage_icon" placeholder="my-service">
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="homepage_widget">
-          <label for="homepage_widget">Include widget placeholder</label>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn-generate" onclick="generate()">Generate</button>
 
   </div>
+</div>
 
-  <!-- RIGHT: Output -->
-  <div class="output-panel" id="output-panel">
-    <div class="placeholder" id="placeholder">
-      Fill in the form and click Generate to see your compose snippet, Homepage YAML, and deploy checklist.
-    </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     NEW SERVICE TAB
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-new-service">
+  <div class="editor-layout">
 
-    <div class="errors hidden" id="errors-block">
-      <ul id="errors-list"></ul>
-    </div>
+    <!-- Left: form -->
+    <div class="form-panel">
+      <div id="promoted-banner" class="promoted-banner" style="display:none"></div>
 
-    <div class="output-block hidden" id="compose-block">
-      <div class="output-header">
-        <span class="label">docker-compose.yml</span>
-        <button class="btn-copy" onclick="copyBlock('compose-pre', this)">Copy</button>
+      <div class="section">
+        <div class="section-title">Service Identity</div>
+
+        <div class="field">
+          <label>Service name <span class="hint">(lowercase, hyphens only)</span></label>
+          <input type="text" id="name" placeholder="my-service" oninput="onNameChange()">
+        </div>
+
+        <div class="field">
+          <label>Docker image</label>
+          <input type="text" id="image" placeholder="ghcr.io/author/image:latest">
+        </div>
+
+        <div class="field">
+          <label>Internal port <span class="hint">(leave blank to auto-detect)</span></label>
+          <input type="number" id="port" placeholder="8080" min="1" max="65535">
+        </div>
+
+        <div class="field">
+          <label>Domain</label>
+          <select id="domain" onchange="onDomainChange()"></select>
+        </div>
+
+        <div class="field">
+          <label>Subdomain override <span class="hint">(defaults to service name)</span></label>
+          <input type="text" id="subdomain_override" placeholder="" oninput="onSubdomainChange()">
+        </div>
       </div>
-      <pre id="compose-pre"></pre>
+
+      <div class="section">
+        <div class="section-title">Environment variables</div>
+        <div class="env-rows" id="svc-env-rows"></div>
+        <button class="btn-add-env" onclick="svcAddEnvRow('','')">+ Add variable</button>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Traefik</div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="auth" checked>
+          <label for="auth">Auth protected</label>
+        </div>
+
+        <div class="field">
+          <label>Extra middlewares <span class="hint">(comma-separated, optional)</span></label>
+          <input type="text" id="extra_middlewares" placeholder="crowdsec@file,compress@file">
+        </div>
+      </div>
+
+      <div class="section" id="kuma-section">
+        <div class="section-title">Uptime Kuma (AutoKuma)</div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="kuma_enabled" checked onchange="toggleSubsection('kuma_enabled','kuma-sub')">
+          <label for="kuma_enabled">Add monitor</label>
+        </div>
+
+        <div class="subsection" id="kuma-sub">
+          <div class="field">
+            <label>Monitor type</label>
+            <select id="kuma_type">
+              <option value="https" selected>HTTPS</option>
+              <option value="http">HTTP</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Monitor URL</label>
+            <input type="text" id="kuma_url" placeholder="https://my-service.example.com">
+          </div>
+          <div class="field">
+            <label>Group <span class="hint">(optional)</span></label>
+            <input type="text" id="kuma_group" placeholder="Services">
+          </div>
+          <div class="field">
+            <label>Interval (seconds)</label>
+            <input type="number" id="kuma_interval" value="60" min="20">
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="hp-section">
+        <div class="section-title">Homepage Dashboard</div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="homepage_enabled" checked onchange="toggleSubsection('homepage_enabled','hp-sub')">
+          <label for="homepage_enabled">Add dashboard entry</label>
+        </div>
+
+        <div class="subsection" id="hp-sub">
+          <div class="field">
+            <label>Display name</label>
+            <input type="text" id="homepage_display_name" placeholder="">
+          </div>
+          <div class="field">
+            <label>Description <span class="hint">(optional)</span></label>
+            <input type="text" id="homepage_description" placeholder="Short description">
+          </div>
+          <div class="field">
+            <label>Group</label>
+            <select id="homepage_group"></select>
+          </div>
+          <div class="field">
+            <label>Icon <span class="hint">(slug or URL, optional)</span></label>
+            <input type="text" id="homepage_icon" placeholder="my-service">
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="homepage_widget">
+            <label for="homepage_widget">Include widget placeholder</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="generate()">Generate</button>
+      <button class="btn-secondary" onclick="resetEditor()">Clear form</button>
     </div>
 
-    <div class="output-block hidden" id="homepage-block">
-      <div class="output-header">
-        <span class="label">Homepage services.yaml snippet</span>
-        <button class="btn-copy" onclick="copyBlock('homepage-pre', this)">Copy</button>
+    <!-- Right: output -->
+    <div class="output-panel" id="output-panel">
+      <div class="placeholder" id="placeholder">
+        Fill in the form and click Generate to see your compose snippet, Homepage YAML, and deploy checklist.
       </div>
-      <pre id="homepage-pre"></pre>
-    </div>
 
-    <div class="output-block hidden" id="checklist-block">
-      <div class="output-header">
-        <span class="label">Deploy checklist</span>
+      <div class="errors hidden" id="errors-block">
+        <ul id="errors-list"></ul>
       </div>
-      <ul class="checklist-list" id="checklist-list"></ul>
+
+      <div class="output-block hidden" id="compose-block">
+        <div class="output-header">
+          <span class="label">docker-compose.yml</span>
+          <button class="btn-copy" onclick="copyBlock('compose-pre', this)">Copy</button>
+        </div>
+        <pre id="compose-pre"></pre>
+      </div>
+
+      <div class="output-block hidden" id="homepage-block">
+        <div class="output-header">
+          <span class="label">Homepage services.yaml snippet</span>
+          <button class="btn-copy" onclick="copyBlock('homepage-pre', this)">Copy</button>
+        </div>
+        <pre id="homepage-pre"></pre>
+      </div>
+
+      <div class="output-block hidden" id="checklist-block">
+        <div class="output-header">
+          <span class="label">Deploy checklist</span>
+        </div>
+        <ul class="checklist-list" id="checklist-list"></ul>
+      </div>
     </div>
 
   </div>
 </div>
 
 <script>
-// Populate form from injected config
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    if (btn.textContent.toLowerCase().replace(' ', '-') === tab ||
+        (tab === 'new-service' && btn.textContent === 'New Service') ||
+        (tab === 'sandboxes' && btn.textContent === 'Sandboxes')) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
 (function init() {
+  // TTL options
+  const ttlSel = document.getElementById('sb-ttl');
+  const defaultTtl = CONFIG.sandbox?.default_ttl_hours || 4;
+  (CONFIG.sandbox?.ttl_options || [1, 4, 8, 24]).forEach(h => {
+    const o = document.createElement('option');
+    o.value = h;
+    o.textContent = h === 1 ? '1 hour' : `${h} hours`;
+    if (h === defaultTtl) o.selected = true;
+    ttlSel.appendChild(o);
+  });
+
+  // Domain select
   const domainSel = document.getElementById('domain');
   (CONFIG.domains || []).forEach(d => {
     const o = document.createElement('option');
-    o.value = d;
-    o.textContent = d;
+    o.value = d; o.textContent = d;
     domainSel.appendChild(o);
   });
 
+  // Homepage groups
   const hpGroupSel = document.getElementById('homepage_group');
   (CONFIG.homepage?.groups || []).forEach(g => {
     const o = document.createElement('option');
-    o.value = g;
-    o.textContent = g;
+    o.value = g; o.textContent = g;
     hpGroupSel.appendChild(o);
   });
 
-  if (!CONFIG.autokuma?.enabled) {
-    document.getElementById('kuma-section').style.display = 'none';
-  }
-  if (!CONFIG.homepage?.enabled) {
-    document.getElementById('hp-section').style.display = 'none';
-  }
+  if (!CONFIG.autokuma?.enabled) document.getElementById('kuma-section').style.display = 'none';
+  if (!CONFIG.homepage?.enabled) document.getElementById('hp-section').style.display = 'none';
+  if (!CONFIG.traefik?.auth_middleware) document.getElementById('auth').closest('.checkbox-row').style.display = 'none';
 
-  // Hide auth checkbox if no auth middleware configured
-  if (!CONFIG.traefik?.auth_middleware) {
-    document.getElementById('auth').closest('.checkbox-row').style.display = 'none';
-  }
+  loadSandboxes();
+  setInterval(loadSandboxes, 10000);
 })();
 
-function getSubdomain() {
-  const override = document.getElementById('subdomain_override').value.trim();
-  return override || document.getElementById('name').value.trim();
+// ── Sandbox env rows ───────────────────────────────────────────────────────────
+function sbAddEnvRow(k, v) {
+  _addEnvRow('sb-env-rows', k, v, 'sbRemoveEnvRow');
+}
+function sbRemoveEnvRow(btn) { btn.closest('.env-row').remove(); }
+function sbCollectEnv() { return _collectEnv('sb-env-rows'); }
+
+// ── Service editor env rows ────────────────────────────────────────────────────
+function svcAddEnvRow(k, v) {
+  _addEnvRow('svc-env-rows', k, v, 'svcRemoveEnvRow');
+}
+function svcRemoveEnvRow(btn) { btn.closest('.env-row').remove(); }
+function svcCollectEnv() { return _collectEnv('svc-env-rows'); }
+
+function _addEnvRow(containerId, k, v, removeFn) {
+  const container = document.getElementById(containerId);
+  const row = document.createElement('div');
+  row.className = 'env-row';
+  row.innerHTML = `
+    <input type="text" class="env-key" placeholder="KEY" value="${_esc(k)}">
+    <input type="text" class="env-val" placeholder="value" value="${_esc(v)}">
+    <button class="btn-env-remove" onclick="${removeFn}(this)" title="Remove">&times;</button>
+  `;
+  container.appendChild(row);
+  row.querySelector('.env-key').focus();
 }
 
-function getDomain() {
-  return document.getElementById('domain').value;
+function _collectEnv(containerId) {
+  const env = {};
+  document.querySelectorAll(`#${containerId} .env-row`).forEach(row => {
+    const k = row.querySelector('.env-key').value.trim();
+    const v = row.querySelector('.env-val').value;
+    if (k) env[k] = v;
+  });
+  return env;
 }
+
+function _esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Sandbox CRUD ───────────────────────────────────────────────────────────────
+async function createSandbox() {
+  const image = document.getElementById('sb-image').value.trim();
+  const portRaw = document.getElementById('sb-port').value.trim();
+  const ttl = parseInt(document.getElementById('sb-ttl').value, 10);
+  const environment = sbCollectEnv();
+  const errEl = document.getElementById('sb-error');
+
+  errEl.style.display = 'none';
+
+  if (!image) { errEl.textContent = 'Image is required.'; errEl.style.display = 'block'; return; }
+
+  const body = { image, ttl_hours: ttl, environment };
+  if (portRaw) body.port = parseInt(portRaw, 10);
+
+  try {
+    const res = await fetch('/api/sandboxes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Failed to launch sandbox.'; errEl.style.display = 'block'; return; }
+    document.getElementById('sb-image').value = '';
+    document.getElementById('sb-port').value = '';
+    document.getElementById('sb-env-rows').innerHTML = '';
+    loadSandboxes();
+  } catch (e) {
+    errEl.textContent = 'Network error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function destroySandbox(sid) {
+  await fetch(`/api/sandboxes/${sid}`, { method: 'DELETE' });
+  loadSandboxes();
+}
+
+async function promoteSandbox(sid) {
+  try {
+    const res = await fetch(`/api/sandboxes/${sid}/promote`);
+    const data = await res.json();
+    if (!res.ok) return;
+    prefillEditor(data);
+    showTab('new-service');
+  } catch (e) {
+    console.error('Promote failed', e);
+  }
+}
+
+async function loadSandboxes() {
+  try {
+    const res = await fetch('/api/sandboxes');
+    const list = await res.json();
+    renderSandboxes(list);
+  } catch (e) { /* silent */ }
+}
+
+function renderSandboxes(list) {
+  const container = document.getElementById('sandbox-list');
+  const countEl = document.getElementById('sandbox-count');
+  const max = CONFIG.sandbox?.max_sandboxes || 10;
+
+  countEl.textContent = `${list.length} / ${max} sandboxes active`;
+
+  if (!list.length) {
+    container.innerHTML = '<div class="sandbox-empty">No active sandboxes.</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(sb => {
+    const started = new Date(sb.created_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const expires = new Date(sb.expires_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const minsLeft = Math.floor(sb.expires_in / 60);
+    const expiresClass = minsLeft < 30 ? 'soon' : minsLeft === 0 ? 'expired' : '';
+    const expiresLabel = minsLeft > 60
+      ? Math.floor(minsLeft / 60) + 'h ' + (minsLeft % 60) + 'm'
+      : minsLeft + 'm';
+    const portLabel = sb.port ? sb.port : 'auto';
+
+    return `<div class="sandbox-card">
+      <div class="sandbox-card-header">
+        <span class="sandbox-image">${_esc(sb.image)}</span>
+        <div class="sandbox-actions">
+          <button class="btn-promote" onclick="promoteSandbox('${sb.id}')">Promote</button>
+          <button class="btn-destroy" onclick="destroySandbox('${sb.id}')">Destroy</button>
+        </div>
+      </div>
+      <div class="sandbox-url"><a href="${_esc(sb.url)}" target="_blank">${_esc(sb.fqdn)}</a></div>
+      <div class="sandbox-meta">
+        <div class="sandbox-meta-item"><span class="sandbox-meta-label">port</span>${portLabel}</div>
+        <div class="sandbox-meta-item"><span class="sandbox-meta-label">started</span>${started}</div>
+        <div class="sandbox-meta-item sandbox-expires ${expiresClass}"><span class="sandbox-meta-label">expires in</span>${expiresLabel}</div>
+        <div class="sandbox-meta-item"><span class="sandbox-meta-label">ttl</span>${sb.ttl_hours}h</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Promote: pre-fill editor ───────────────────────────────────────────────────
+function prefillEditor(data) {
+  document.getElementById('name').value = data.name || '';
+  document.getElementById('image').value = data.image || '';
+  document.getElementById('port').value = data.port || '';
+  document.getElementById('subdomain_override').value = '';
+
+  // Clear and re-populate env rows
+  document.getElementById('svc-env-rows').innerHTML = '';
+  Object.entries(data.environment || {}).forEach(([k, v]) => svcAddEnvRow(k, v));
+
+  // Show promoted banner
+  const banner = document.getElementById('promoted-banner');
+  banner.textContent = `Promoted from sandbox: ${data.fqdn}`;
+  banner.style.display = 'block';
+
+  // Clear previous output
+  resetOutput();
+  onNameChange();
+}
+
+function resetEditor() {
+  document.getElementById('name').value = '';
+  document.getElementById('image').value = '';
+  document.getElementById('port').value = '';
+  document.getElementById('subdomain_override').value = '';
+  document.getElementById('extra_middlewares').value = '';
+  document.getElementById('svc-env-rows').innerHTML = '';
+  document.getElementById('promoted-banner').style.display = 'none';
+  resetOutput();
+}
+
+function resetOutput() {
+  document.getElementById('placeholder').style.display = '';
+  document.getElementById('errors-block').classList.add('hidden');
+  document.getElementById('compose-block').classList.add('hidden');
+  document.getElementById('homepage-block').classList.add('hidden');
+  document.getElementById('checklist-block').classList.add('hidden');
+}
+
+// ── Editor field helpers ───────────────────────────────────────────────────────
+function getSubdomain() {
+  return document.getElementById('subdomain_override').value.trim() || document.getElementById('name').value.trim();
+}
+
+function getDomain() { return document.getElementById('domain').value; }
 
 function updateKumaUrl() {
-  const sd = getSubdomain();
-  const d = getDomain();
+  const sd = getSubdomain(), d = getDomain();
   const urlField = document.getElementById('kuma_url');
   if (sd && d) {
     urlField.placeholder = `https://${sd}.${d}`;
-    if (!urlField.dataset.manual) {
-      urlField.value = `https://${sd}.${d}`;
-    }
+    if (!urlField.dataset.manual) urlField.value = `https://${sd}.${d}`;
   }
 }
 
@@ -548,37 +981,16 @@ document.getElementById('homepage_display_name').addEventListener('input', funct
   if (!this.value) delete this.dataset.manual;
 });
 
-function onNameChange() {
-  updateKumaUrl();
-  autoFillDisplayName();
-}
-
-function onDomainChange() {
-  updateKumaUrl();
-}
-
-function onSubdomainChange() {
-  updateKumaUrl();
-}
+function onNameChange() { updateKumaUrl(); autoFillDisplayName(); }
+function onDomainChange() { updateKumaUrl(); }
+function onSubdomainChange() { updateKumaUrl(); }
 
 function toggleSubsection(checkboxId, subId) {
   const checked = document.getElementById(checkboxId).checked;
-  const sub = document.getElementById(subId);
-  sub.classList.toggle('hidden', !checked);
+  document.getElementById(subId).classList.toggle('hidden', !checked);
 }
 
-function copyBlock(preId, btn) {
-  const text = document.getElementById(preId).textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy';
-      btn.classList.remove('copied');
-    }, 1800);
-  });
-}
-
+// ── Generate ───────────────────────────────────────────────────────────────────
 function collectFormData() {
   return {
     name: document.getElementById('name').value.trim(),
@@ -588,6 +1000,7 @@ function collectFormData() {
     subdomain_override: document.getElementById('subdomain_override').value.trim(),
     auth: document.getElementById('auth').checked,
     extra_middlewares: document.getElementById('extra_middlewares').value.trim(),
+    environment: svcCollectEnv(),
     kuma_enabled: CONFIG.autokuma?.enabled && document.getElementById('kuma_enabled').checked,
     kuma_type: document.getElementById('kuma_type').value,
     kuma_url: document.getElementById('kuma_url').value.trim(),
@@ -605,7 +1018,7 @@ function collectFormData() {
 
 async function generate() {
   const data = collectFormData();
-  const btn = document.querySelector('.btn-generate');
+  const btn = document.querySelector('#tab-new-service .btn-primary');
   btn.textContent = 'Generating...';
   btn.disabled = true;
 
@@ -615,8 +1028,7 @@ async function generate() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const result = await res.json();
-    renderOutput(result);
+    renderOutput(await res.json());
   } catch (e) {
     renderOutput({ errors: ['Network error: ' + e.message], compose: '', homepage: '', checklist: [] });
   } finally {
@@ -626,45 +1038,41 @@ async function generate() {
 }
 
 function renderOutput(result) {
-  const placeholder = document.getElementById('placeholder');
-  const errBlock = document.getElementById('errors-block');
-  const errList = document.getElementById('errors-list');
-  const composeBlock = document.getElementById('compose-block');
-  const composePre = document.getElementById('compose-pre');
-  const hpBlock = document.getElementById('homepage-block');
-  const hpPre = document.getElementById('homepage-pre');
-  const checklistBlock = document.getElementById('checklist-block');
-  const checklistList = document.getElementById('checklist-list');
-
-  placeholder.style.display = 'none';
+  document.getElementById('placeholder').style.display = 'none';
 
   if (result.errors && result.errors.length) {
-    errList.innerHTML = result.errors.map(e => `<li>${e}</li>`).join('');
-    errBlock.classList.remove('hidden');
-    composeBlock.classList.add('hidden');
-    hpBlock.classList.add('hidden');
-    checklistBlock.classList.add('hidden');
+    document.getElementById('errors-list').innerHTML = result.errors.map(e => `<li>${e}</li>`).join('');
+    document.getElementById('errors-block').classList.remove('hidden');
+    ['compose-block','homepage-block','checklist-block'].forEach(id => document.getElementById(id).classList.add('hidden'));
     return;
   }
 
-  errBlock.classList.add('hidden');
+  document.getElementById('errors-block').classList.add('hidden');
 
-  composePre.textContent = result.compose;
-  composeBlock.classList.remove('hidden');
+  document.getElementById('compose-pre').textContent = result.compose;
+  document.getElementById('compose-block').classList.remove('hidden');
 
   if (result.homepage) {
-    hpPre.textContent = result.homepage;
-    hpBlock.classList.remove('hidden');
+    document.getElementById('homepage-pre').textContent = result.homepage;
+    document.getElementById('homepage-block').classList.remove('hidden');
   } else {
-    hpBlock.classList.add('hidden');
+    document.getElementById('homepage-block').classList.add('hidden');
   }
 
   if (result.checklist && result.checklist.length) {
-    checklistList.innerHTML = result.checklist.map(item => `<li>${item}</li>`).join('');
-    checklistBlock.classList.remove('hidden');
+    document.getElementById('checklist-list').innerHTML = result.checklist.map(item => `<li>${item}</li>`).join('');
+    document.getElementById('checklist-block').classList.remove('hidden');
   } else {
-    checklistBlock.classList.add('hidden');
+    document.getElementById('checklist-block').classList.add('hidden');
   }
+}
+
+function copyBlock(preId, btn) {
+  navigator.clipboard.writeText(document.getElementById(preId).textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+  });
 }
 </script>
 

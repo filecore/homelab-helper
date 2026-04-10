@@ -1,6 +1,5 @@
 # homelab-helper configuration
 # Volume-mounted into the container at /config/config.yaml
-# Edit this file to match your homelab setup.
 
 homelab:
   name: "nightjar homelab"
@@ -33,3 +32,16 @@ homepage:
     - Utilities
     - Networking
     - Download
+
+sandbox:
+  # Default TTL shown in the sandbox create form (hours)
+  default_ttl_hours: 4
+  # Hard limit on concurrent sandboxes
+  max_sandboxes: 10
+  # TTL options shown in the dropdown (hours)
+  ttl_options: [1, 4, 8, 24]
+
+security:
+  # Set to true once you have confirmed this service is protected
+  # by your reverse proxy (e.g. TinyAuth). Hides the auth warning banner.
+  suppress_auth_warning: false

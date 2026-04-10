@@ -1,14 +1,11 @@
 import re
-import yaml
 
 
 def slugify(name):
-    """Lowercase, replace spaces/underscores with hyphens, strip non-alphanum-hyphens."""
     s = name.lower().strip()
     s = re.sub(r"[\s_]+", "-", s)
     s = re.sub(r"[^a-z0-9-]", "", s)
-    s = s.strip("-")
-    return s
+    return s.strip("-")
 
 
 def validate_input(data):
@@ -70,6 +67,7 @@ def generate_compose(data, cfg):
     entrypoint = cfg["traefik"]["entrypoint"]
     cert_resolver = cfg["traefik"]["cert_resolver"]
     middleware_str = _build_middleware_string(data, cfg)
+    environment = {k: v for k, v in (data.get("environment") or {}).items() if k.strip()}
 
     labels = [
         "traefik.enable=true",
@@ -86,7 +84,6 @@ def generate_compose(data, cfg):
             f"traefik.http.services.{name}.loadbalancer.server.port={port}"
         )
 
-    # AutoKuma labels
     if cfg["autokuma"]["enabled"] and data.get("kuma_enabled"):
         kuma_url = data.get("kuma_url", "").strip() or f"https://{subdomain}.{domain}"
         kuma_type = data.get("kuma_type", "https")
@@ -101,24 +98,19 @@ def generate_compose(data, cfg):
         if kuma_group:
             labels.append(f"kuma.{name}.monitor.parent_name={kuma_group}")
 
-    # Build the compose dict using plain dicts so we control YAML output exactly
-    service = {
-        "image": image,
-        "container_name": name,
-        "restart": "unless-stopped",
-        "networks": [network],
-        "labels": [f'"{lbl}"' for lbl in labels],
-    }
+    lines = [
+        "services:",
+        f"  {name}:",
+        f"    image: {image}",
+        f"    container_name: {name}",
+        "    restart: unless-stopped",
+    ]
 
-    # yaml.dump produces labels as a list of quoted strings, but we want
-    # the block to look clean. Build the YAML manually for the labels section
-    # to avoid yaml.dump's quoting choices, then assemble the full snippet.
-    lines = []
-    lines.append("services:")
-    lines.append(f"  {name}:")
-    lines.append(f"    image: {image}")
-    lines.append(f"    container_name: {name}")
-    lines.append("    restart: unless-stopped")
+    if environment:
+        lines.append("    environment:")
+        for k, v in environment.items():
+            lines.append(f"      - {k}={v}")
+
     lines.append("    networks:")
     lines.append(f"      - {network}")
     lines.append("    labels:")
@@ -145,7 +137,7 @@ def generate_homepage(data, cfg):
     widget = data.get("homepage_widget", False)
 
     lines = [
-        f"# Paste into your homepage services.yaml",
+        "# Paste into your homepage services.yaml",
         f"- {group}:",
         f"  - {display_name}:",
         f"      href: https://{subdomain}.{domain}",
@@ -179,9 +171,7 @@ def build_checklist(data, cfg):
         f"Verify Traefik picked it up: check the Traefik dashboard or run "
         f"docker logs traefik | grep {name}"
     )
-    items.append(
-        f"Test the URL: https://{subdomain}.{domain}"
-    )
+    items.append(f"Test the URL: https://{subdomain}.{domain}")
 
     if cfg["homepage"]["enabled"] and data.get("homepage_enabled"):
         items.append(

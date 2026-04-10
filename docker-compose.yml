@@ -5,15 +5,18 @@ services:
     restart: unless-stopped
     volumes:
       - ./config:/config
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - CONFIG_PATH=/config/config.yaml
+      - STATE_FILE=/data/sandboxes.json
     ports:
       - "7842:7842"
     networks:
       - reverse-proxy
 
-  # To expose via Traefik, uncomment and add labels -- or better yet, use the wizard
-  # itself to generate the snippet for homelab-helper, then add the labels here.
+  # To expose via Traefik, add labels here or use the New Service wizard
+  # to generate the compose snippet for homelab-helper itself.
 
 networks:
   reverse-proxy:

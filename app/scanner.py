@@ -11,8 +11,14 @@ _SYSTEM_NETWORKS = {"bridge", "host", "none"}
 
 # Image/name patterns for known services
 _TRAEFIK_PATTERNS  = ("traefik/traefik", "traefik:")
+_NPM_PATTERNS      = ("jc21/nginx-proxy-manager",)
+_CADDY_PATTERNS    = ("caddy:", "caddy/caddy", "lucaslorentz/caddy-docker-proxy")
 _AUTOKUMA_PATTERNS = ("autokuma",)
+_UPTIME_KUMA_PATTERNS = ("louislam/uptime-kuma",)
 _HOMEPAGE_PATTERNS = ("gethomepage/homepage",)
+_HOMARR_PATTERNS   = ("homarr",)
+_HEIMDALL_PATTERNS = ("linuxserver/heimdall", "lscr.io/linuxserver/heimdall")
+_PORTAINER_PATTERNS = ("portainer/portainer", "portainer/portainer-ce")
 
 
 def _match(haystack, patterns):
@@ -28,13 +34,19 @@ def scan():
         "docker_available": bool,
         "traefik": {
             "detected": bool,
-            "network": str | None,        # best-guess reverse-proxy network
-            "networks_available": [str],  # all non-system networks (dropdown hints)
+            "network": str | None,
+            "networks_available": [str],
             "entrypoint": str | None,
             "cert_resolver": str | None,
         },
-        "autokuma": {"detected": bool},
-        "homepage":  {"detected": bool},
+        "npm":        {"detected": bool},
+        "caddy":      {"detected": bool},
+        "autokuma":   {"detected": bool},
+        "uptime_kuma":{"detected": bool},
+        "homepage":   {"detected": bool},
+        "homarr":     {"detected": bool},
+        "heimdall":   {"detected": bool},
+        "portainer":  {"detected": bool},
     }
     """
     result = {
@@ -46,8 +58,14 @@ def scan():
             "entrypoint": None,
             "cert_resolver": None,
         },
-        "autokuma": {"detected": False},
-        "homepage":  {"detected": False},
+        "npm":         {"detected": False},
+        "caddy":       {"detected": False},
+        "autokuma":    {"detected": False},
+        "uptime_kuma": {"detected": False},
+        "homepage":    {"detected": False},
+        "homarr":      {"detected": False},
+        "heimdall":    {"detected": False},
+        "portainer":   {"detected": False},
     }
 
     try:
@@ -96,13 +114,37 @@ def scan():
                 if m:
                     result["traefik"]["cert_resolver"] = m.group(1)
 
+            # ── Nginx Proxy Manager ───────────────────────────────────────────
+            if _match(image_str, _NPM_PATTERNS) or "nginx-proxy-manager" in name:
+                result["npm"]["detected"] = True
+
+            # ── Caddy ─────────────────────────────────────────────────────────
+            if _match(image_str, _CADDY_PATTERNS) or name == "caddy":
+                result["caddy"]["detected"] = True
+
             # ── AutoKuma ─────────────────────────────────────────────────────
             if _match(image_str, _AUTOKUMA_PATTERNS) or "autokuma" in name:
                 result["autokuma"]["detected"] = True
 
+            # ── Uptime Kuma ───────────────────────────────────────────────────
+            if _match(image_str, _UPTIME_KUMA_PATTERNS) or "uptime-kuma" in name:
+                result["uptime_kuma"]["detected"] = True
+
             # ── Homepage ─────────────────────────────────────────────────────
             if _match(image_str, _HOMEPAGE_PATTERNS) or name == "homepage":
                 result["homepage"]["detected"] = True
+
+            # ── Homarr ───────────────────────────────────────────────────────
+            if _match(image_str, _HOMARR_PATTERNS) or name == "homarr":
+                result["homarr"]["detected"] = True
+
+            # ── Heimdall ──────────────────────────────────────────────────────
+            if _match(image_str, _HEIMDALL_PATTERNS) or name == "heimdall":
+                result["heimdall"]["detected"] = True
+
+            # ── Portainer ─────────────────────────────────────────────────────
+            if _match(image_str, _PORTAINER_PATTERNS) or name in ("portainer", "portainer-ce"):
+                result["portainer"]["detected"] = True
 
     except Exception:
         pass

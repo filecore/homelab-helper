@@ -379,7 +379,9 @@ const SCAN = {{ scan_json | safe }};
       <div class="step-title">Domains</div>
       <div class="step-desc">
         The domains you own. The first entry is the default when generating compose snippets.
-        Sandbox URLs use the first domain (e.g. <code>try-recipes-a1b2.example.com</code>).
+        Sandbox URLs use the first domain (e.g. <code>try-recipes-a1b2.example.com</code>).<br><br>
+        Enter bare domain names only — no protocol or www prefix
+        (e.g. <code>example.com</code>, not <code>https://www.example.com</code>).
       </div>
 
       <div class="list-rows" id="domain-rows"></div>
@@ -398,31 +400,33 @@ const SCAN = {{ scan_json | safe }};
         routing settings that match your Traefik setup.
       </div>
 
+      <div id="traefik-proxy-note" style="display:none; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text-dim); font-size:12px; padding:10px 12px; margin-bottom:16px; line-height:1.6;"></div>
+
       <div class="field">
-        <label>Docker network <span class="hint">(the shared network Traefik uses to reach containers)</span></label>
+        <label>Docker network <span class="hint">(the shared network Traefik and your containers both join — find it under <code>networks:</code> in your Traefik compose file)</span></label>
         <input type="text" id="traefik_network" placeholder="reverse-proxy" list="network-suggestions">
         <datalist id="network-suggestions"></datalist>
       </div>
 
       <div class="field">
-        <label>HTTPS entrypoint name <span class="hint">(the name of your 443 entrypoint in traefik.yml)</span></label>
+        <label>HTTPS entrypoint name <span class="hint">(defined under <code>entryPoints:</code> in traefik.yml — almost always <code>websecure</code>)</span></label>
         <input type="text" id="traefik_entrypoint" placeholder="websecure">
       </div>
 
       <div class="field">
-        <label>Cert resolver name <span class="hint">(the name of your certificatesResolver in traefik.yml)</span></label>
+        <label>Cert resolver name <span class="hint">(defined under <code>certificatesResolvers:</code> in traefik.yml — e.g. <code>letsencrypt</code>, <code>cloudflare</code>)</span></label>
         <input type="text" id="traefik_cert_resolver" placeholder="letsencrypt">
       </div>
 
       <div class="field">
         <label>
           Auth middleware
-          <span class="hint">(optional — e.g. tinyauth@file, authelia@docker. Leave blank to hide the auth toggle.)</span>
+          <span class="hint">(optional — e.g. <code>tinyauth@file</code>, <code>authelia@docker</code>. Leave blank to hide the auth toggle.)</span>
         </label>
         <input type="text" id="traefik_auth" placeholder="">
       </div>
 
-      <div class="error-msg" id="traefik-error">Network, entrypoint, and cert resolver are required.</div>
+      <div class="error-msg" id="traefik-error">Fill in all three fields, or leave all blank to skip Traefik configuration.</div>
     </div>
 
     <!-- ── Step 5: Integrations ───────────────────────────────────────────── -->
@@ -544,7 +548,8 @@ function validateStep(n) {
     const net = document.getElementById('traefik_network').value.trim();
     const ep  = document.getElementById('traefik_entrypoint').value.trim();
     const cr  = document.getElementById('traefik_cert_resolver').value.trim();
-    const ok  = net && ep && cr;
+    const anyFilled = net || ep || cr;
+    const ok  = !anyFilled || (net && ep && cr);
     document.getElementById('traefik-error').style.display = ok ? 'none' : 'block';
     return ok;
   }
@@ -553,7 +558,7 @@ function validateStep(n) {
 
 // ── List row helpers ───────────────────────────────────────────────────────────
 function addDomainRow(val) {
-  _addListRow('domain-rows', val, 'domain', 'removeDomainRow');
+  _addListRow('domain-rows', val, 'example.com', 'removeDomainRow');
 }
 function removeDomainRow(btn) { btn.closest('.list-row').remove(); }
 
@@ -682,22 +687,39 @@ async function createConfig() {
   // Step 1: scan results
   const results = document.getElementById('scan-results');
 
-  function scanItem(label, detected, detail) {
+  function scanItem(label, detected, detail, alwaysShow) {
+    if (!detected && !alwaysShow) return;
     const el = document.createElement('div');
     el.className = 'scan-item';
     el.innerHTML = `
       <span class="scan-item-label">${label}</span>
       <span class="${detected ? 'scan-status-ok' : 'scan-status-no'}">
-        ${detected ? (detail ? 'Detected — ' + detail : 'Detected') : 'Not detected — using defaults'}
+        ${detected ? (detail ? 'Detected &mdash; ' + detail : 'Detected') : 'Not detected'}
       </span>`;
     results.appendChild(el);
   }
 
   const tr = SCAN.traefik;
-  scanItem('Docker', SCAN.docker_available, SCAN.docker_available ? 'socket accessible' : '');
-  scanItem('Traefik', tr.detected, tr.network ? 'network: ' + tr.network : '');
-  scanItem('AutoKuma', SCAN.autokuma.detected);
-  scanItem('Homepage', SCAN.homepage.detected);
+
+  // Docker (always show — it's the prerequisite)
+  scanItem('Docker', SCAN.docker_available, SCAN.docker_available ? 'socket accessible' : '', true);
+
+  // Reverse proxies — always show Traefik; show NPM/Caddy only if detected
+  scanItem('Traefik', tr.detected, tr.network ? 'network: ' + tr.network : '', true);
+  scanItem('Nginx Proxy Manager', SCAN.npm.detected);
+  scanItem('Caddy', SCAN.caddy.detected);
+
+  // Monitoring / automation — always show AutoKuma; show Uptime Kuma only if detected
+  scanItem('AutoKuma', SCAN.autokuma.detected, '', true);
+  scanItem('Uptime Kuma', SCAN.uptime_kuma.detected);
+
+  // Dashboards — always show Homepage; show Homarr/Heimdall only if detected
+  scanItem('Homepage', SCAN.homepage.detected, '', true);
+  scanItem('Homarr', SCAN.homarr.detected);
+  scanItem('Heimdall', SCAN.heimdall.detected);
+
+  // Management — show only if detected
+  scanItem('Portainer', SCAN.portainer.detected);
 
   if (!SCAN.docker_available) {
     document.getElementById('scan-note').textContent =
@@ -710,6 +732,19 @@ async function createConfig() {
   trBadge.innerHTML = tr.detected
     ? '<span class="detected-badge">Detected</span>'
     : '<span class="not-detected-badge">Not detected</span>';
+
+  // Step 4: show a note if another reverse proxy was found instead of Traefik
+  const proxyNote = document.getElementById('traefik-proxy-note');
+  if (!tr.detected && (SCAN.npm.detected || SCAN.caddy.detected)) {
+    const found = [SCAN.npm.detected && 'Nginx Proxy Manager', SCAN.caddy.detected && 'Caddy'].filter(Boolean).join(' and ');
+    proxyNote.textContent = found + ' was detected but homelab-helper currently generates Traefik labels only. ' +
+      'You can leave these fields blank to skip Traefik label generation, or fill them in if Traefik is also running.';
+    proxyNote.style.display = 'block';
+  } else if (!tr.detected) {
+    proxyNote.textContent = 'Traefik was not detected. If you use Traefik, fill in the fields below. ' +
+      'Leave all blank to skip Traefik label generation.';
+    proxyNote.style.display = 'block';
+  }
 
   if (tr.network)       document.getElementById('traefik_network').value     = tr.network;
   if (tr.entrypoint)    document.getElementById('traefik_entrypoint').value  = tr.entrypoint;

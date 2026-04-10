@@ -1,6 +1,6 @@
 # homelab-helper
 
-A self-hosted web tool for managing Docker services in a Traefik-based homelab.
+A self-hosted web tool for trying out and deploying Docker services in a homelab. Generates Traefik v3 labels, AutoKuma monitor blocks, and Homepage dashboard entries.
 
 Two main features:
 

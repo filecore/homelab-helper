@@ -124,9 +124,18 @@ The container mounts the Docker socket (`/var/run/docker.sock`), which gives the
 
 This is not a reason to avoid the tool, but it is a reason to keep authentication in front of it and not expose port 7842 to the internet.
 
+### Two different networks, two different trust levels
+
+These two things are both true and not in conflict:
+
+- **Sandbox containers go on `sandbox-net`**, a dedicated isolated network. This is because sandbox containers run arbitrary third-party images you are evaluating and may not trust. They should not be able to reach your other services.
+- **Permanent services go on `reverse-proxy`**, the shared Traefik network. This is intentional and correct. Services you have decided to run permanently need to be on the same network as Traefik in order to be proxied, and are assumed to be trusted.
+
+The distinction is purpose and trust level, not an inconsistency in approach.
+
 ### Sandbox container isolation
 
-The main risk of a sandbox feature is that a malicious or buggy image could be used to probe or attack other services on the same host. homelab-helper applies the following mitigations by default:
+The main risk of a sandbox feature is that a malicious or buggy image could probe or attack other services on the same host. homelab-helper applies the following mitigations by default:
 
 **Network isolation.** Sandbox containers are placed on a dedicated `sandbox-net` network rather than your production `reverse-proxy` network. Traefik is automatically connected to `sandbox-net` when the first sandbox is created, so FQDN routing still works. Containers on `sandbox-net` cannot reach other homelab services by container name.
 
@@ -140,6 +149,6 @@ All four settings are configurable under `sandbox:` in `config.yaml`. Relaxing a
 
 ### Shared service network
 
-The New Service generator places all services on the shared Traefik network (default: `reverse-proxy`). Containers on the same Docker network can reach each other by container name on any port, including ports not published to the host. This is the standard Traefik homelab pattern and is acceptable for most home setups where all running services are trusted.
+The New Service generator places permanent services on the shared Traefik network (default: `reverse-proxy`). Containers on the same Docker network can reach each other by container name on any port, including ports not published to the host. This is the standard Traefik homelab pattern and is acceptable for most home setups where all running services are trusted.
 
 If you want stronger isolation between production services, the hardened pattern is to give each service its own internal network for talking to its database or sidecar, and attach it to `reverse-proxy` only for Traefik routing. This is a manual step outside the scope of the generator.

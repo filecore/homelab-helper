@@ -498,7 +498,7 @@ const CONFIG = {{ config_json | safe }};
 
 {% if auth_warning %}
 <div class="auth-warning">
-  No built-in authentication &mdash; ensure this service is protected by your reverse proxy before exposing it on your network. Set <code>security.suppress_auth_warning: true</code> in config.yaml to dismiss.
+  No built-in authentication &mdash; ensure this service is protected by your reverse proxy and preferred auth before exposing it on your network. Set <code>security.suppress_auth_warning: true</code> in config.yaml to dismiss.
 </div>
 {% endif %}
 

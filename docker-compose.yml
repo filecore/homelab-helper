@@ -3,6 +3,7 @@ services:
     build: .
     container_name: homelab-helper
     restart: unless-stopped
+    user: "1000:999"
     volumes:
       - ./config:/config
       - ./data:/data

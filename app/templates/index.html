@@ -127,6 +127,12 @@ header .tagline { color: var(--text-dim); font-size: 12px; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-width: 560px;
+}
+
+.sandbox-card.deploying {
+  opacity: 0.5;
+  border-style: dashed;
 }
 
 .sandbox-card-header {
@@ -815,13 +821,19 @@ async function createSandbox() {
   const ttl = parseInt(document.getElementById('sb-ttl').value, 10);
   const environment = sbCollectEnv();
   const errEl = document.getElementById('sb-error');
+  const btn = document.querySelector('#tab-sandboxes .btn-primary');
 
   errEl.style.display = 'none';
-
   if (!image) { errEl.textContent = 'Image is required.'; errEl.style.display = 'block'; return; }
 
   const body = { image, ttl_hours: ttl, environment };
   if (portRaw) body.port = parseInt(portRaw, 10);
+
+  // Optimistic deploying card
+  const tempId = '_deploying_' + Date.now();
+  addDeployingCard(tempId, image);
+  btn.textContent = 'Launching...';
+  btn.disabled = true;
 
   try {
     const res = await fetch('/api/sandboxes', {
@@ -830,14 +842,47 @@ async function createSandbox() {
       body: JSON.stringify(body),
     });
     const data = await res.json();
+    removeDeployingCard(tempId);
     if (!res.ok) { errEl.textContent = data.error || 'Failed to launch sandbox.'; errEl.style.display = 'block'; return; }
     document.getElementById('sb-image').value = '';
     document.getElementById('sb-port').value = '';
     document.getElementById('sb-env-rows').innerHTML = '';
     loadSandboxes();
   } catch (e) {
+    removeDeployingCard(tempId);
     errEl.textContent = 'Network error: ' + e.message;
     errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Launch';
+    btn.disabled = false;
+  }
+}
+
+function addDeployingCard(tempId, image) {
+  const list = document.getElementById('sandbox-list');
+  // Remove empty placeholder if present
+  const empty = list.querySelector('.sandbox-empty');
+  if (empty) empty.remove();
+
+  const card = document.createElement('div');
+  card.className = 'sandbox-card deploying';
+  card.id = tempId;
+  card.innerHTML = `
+    <div class="sandbox-card-header">
+      <span class="sandbox-image">${_esc(image)}</span>
+    </div>
+    <div style="color:var(--text-dim);font-size:12px;">Deploying&hellip; (pulling image and starting container)</div>
+  `;
+  list.prepend(card);
+}
+
+function removeDeployingCard(tempId) {
+  const card = document.getElementById(tempId);
+  if (card) card.remove();
+  // Restore placeholder if list is now empty
+  const list = document.getElementById('sandbox-list');
+  if (!list.querySelector('.sandbox-card')) {
+    list.innerHTML = '<div class="sandbox-empty">No active sandboxes.</div>';
   }
 }
 

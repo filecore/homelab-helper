@@ -21,4 +21,4 @@ ENV STATE_FILE=/data/sandboxes.json
 
 EXPOSE 7842
 
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:7842", "wsgi:app"]
+CMD ["gunicorn", "--workers", "1", "--bind", "0.0.0.0:7842", "wsgi:app"]

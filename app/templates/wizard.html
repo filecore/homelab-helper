@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>homelab-helper — setup</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: #2e3348;
+  --accent: #5b8dee;
+  --accent-dim: #3a5ca8;
+  --text: #d4d8f0;
+  --text-dim: #7a80a0;
+  --green: #4caf82;
+  --red: #e05c5c;
+  --yellow: #d4a843;
+  --radius: 8px;
+  --font: 'Arial', 'Helvetica Neue', Helvetica, sans-serif;
+  --mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 16px 60px;
+}
+
+.wizard-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 580px;
+}
+
+.wizard-header {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wizard-header h1 { font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.wizard-header .subtitle { color: var(--text-dim); font-size: 13px; }
+
+/* Progress bar */
+.wizard-progress {
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-step {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.progress-step.active { border-color: var(--accent); color: var(--accent); }
+.progress-step.done { border-color: var(--green); background: var(--green); color: #fff; }
+
+.progress-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.progress-connector.done { background: var(--green); }
+
+/* Step body */
+.wizard-body { padding: 28px 32px; }
+
+.step { display: none; }
+.step.active { display: block; }
+
+.step-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.step-desc {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* Fields */
+.field { margin-bottom: 16px; }
+
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+}
+
+.field label .hint { font-size: 11px; opacity: 0.65; font-style: italic; }
+
+input[type=text], input[type=number], select, textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+
+select option { background: var(--surface); }
+
+textarea { font-family: var(--mono); font-size: 12px; resize: vertical; min-height: 80px; }
+
+/* Detected badge */
+.detected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #1a2e1a;
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  margin-left: 6px;
+}
+
+.not-detected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 1px 7px;
+  margin-left: 6px;
+}
+
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-row input[type=checkbox] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-row .toggle-label { font-size: 13px; font-weight: 600; }
+.toggle-row .toggle-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+.toggle-sub {
+  padding: 0 14px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  margin-bottom: 12px;
+  margin-top: -12px;
+}
+
+.toggle-sub.hidden { display: none; }
+
+/* Domain/group rows */
+.list-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.list-row { display: flex; gap: 6px; align-items: center; }
+.list-row input { flex: 1; }
+.btn-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px 9px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-remove:hover { border-color: var(--red); color: var(--red); }
+
+.btn-add {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 6px 10px;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s;
+}
+.btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Scan results (step 1) */
+.scan-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.scan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.scan-item-label { font-weight: 600; }
+.scan-status-ok { color: var(--green); font-size: 12px; font-weight: 600; }
+.scan-status-no { color: var(--text-dim); font-size: 12px; }
+
+.scan-note {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+/* YAML preview */
+.yaml-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text);
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+/* Navigation */
+.wizard-nav {
+  padding: 20px 32px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-back {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 9px 20px;
+  transition: all 0.15s;
+}
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
+.btn-back:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.btn-next {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 24px;
+  transition: background 0.15s;
+}
+.btn-next:hover { background: var(--accent-dim); }
+.btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-msg {
+  color: var(--red);
+  font-size: 12px;
+  margin-top: 6px;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<script>
+const SCAN = {{ scan_json | safe }};
+</script>
+
+<div class="wizard-card">
+
+  <div class="wizard-header">
+    <h1>homelab-helper</h1>
+    <div class="subtitle">First-time setup &mdash; let's configure it for your environment.</div>
+  </div>
+
+  <div class="wizard-progress" id="progress-bar">
+    <!-- Rendered by JS -->
+  </div>
+
+  <div class="wizard-body">
+
+    <!-- ── Step 1: Welcome & scan results ─────────────────────────────────── -->
+    <div class="step active" id="step-1">
+      <div class="step-title">Environment scan</div>
+      <div class="step-desc">
+        We scanned your Docker environment to pre-populate settings where possible.
+        Everything can be adjusted in the next steps.
+      </div>
+
+      <div class="scan-results" id="scan-results"></div>
+      <div class="scan-note" id="scan-note"></div>
+    </div>
+
+    <!-- ── Step 2: Identity ───────────────────────────────────────────────── -->
+    <div class="step" id="step-2">
+      <div class="step-title">Homelab identity</div>
+      <div class="step-desc">A display name shown in the app header.</div>
+
+      <div class="field">
+        <label>Homelab name</label>
+        <input type="text" id="homelab_name" placeholder="My Homelab" value="My Homelab">
+      </div>
+    </div>
+
+    <!-- ── Step 3: Domains ────────────────────────────────────────────────── -->
+    <div class="step" id="step-3">
+      <div class="step-title">Domains</div>
+      <div class="step-desc">
+        The domains you own. The first entry is the default when generating compose snippets.
+        Sandbox URLs use the first domain (e.g. <code>try-recipes-a1b2.example.com</code>).
+      </div>
+
+      <div class="list-rows" id="domain-rows"></div>
+      <button class="btn-add" onclick="addDomainRow('')">+ Add domain</button>
+      <div class="error-msg" id="domain-error">At least one domain is required.</div>
+    </div>
+
+    <!-- ── Step 4: Traefik ────────────────────────────────────────────────── -->
+    <div class="step" id="step-4">
+      <div class="step-title">
+        Traefik
+        <span id="traefik-badge"></span>
+      </div>
+      <div class="step-desc">
+        homelab-helper generates Traefik labels for new services. Configure the network and
+        routing settings that match your Traefik setup.
+      </div>
+
+      <div class="field">
+        <label>Docker network <span class="hint">(the shared network Traefik uses to reach containers)</span></label>
+        <input type="text" id="traefik_network" placeholder="reverse-proxy" list="network-suggestions">
+        <datalist id="network-suggestions"></datalist>
+      </div>
+
+      <div class="field">
+        <label>HTTPS entrypoint name <span class="hint">(the name of your 443 entrypoint in traefik.yml)</span></label>
+        <input type="text" id="traefik_entrypoint" placeholder="websecure">
+      </div>
+
+      <div class="field">
+        <label>Cert resolver name <span class="hint">(the name of your certificatesResolver in traefik.yml)</span></label>
+        <input type="text" id="traefik_cert_resolver" placeholder="letsencrypt">
+      </div>
+
+      <div class="field">
+        <label>
+          Auth middleware
+          <span class="hint">(optional — e.g. tinyauth@file, authelia@docker. Leave blank to hide the auth toggle.)</span>
+        </label>
+        <input type="text" id="traefik_auth" placeholder="">
+      </div>
+
+      <div class="error-msg" id="traefik-error">Network, entrypoint, and cert resolver are required.</div>
+    </div>
+
+    <!-- ── Step 5: Integrations ───────────────────────────────────────────── -->
+    <div class="step" id="step-5">
+      <div class="step-title">Integrations</div>
+      <div class="step-desc">
+        Enable optional integrations. homelab-helper will generate the relevant labels and YAML
+        snippets for anything you turn on.
+      </div>
+
+      <!-- AutoKuma -->
+      <label class="toggle-row" for="autokuma_enabled">
+        <input type="checkbox" id="autokuma_enabled" onchange="toggleSub('autokuma_enabled', 'autokuma-sub')">
+        <div>
+          <div class="toggle-label">AutoKuma <span id="kuma-badge"></span></div>
+          <div class="toggle-desc">Automatically creates Uptime Kuma monitors from container labels.</div>
+        </div>
+      </label>
+      <div class="toggle-sub hidden" id="autokuma-sub" style="padding-top:12px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Kuma group label <span class="hint">(optional default group for monitors)</span></label>
+          <input type="text" id="kuma_default_group" placeholder="Services">
+        </div>
+      </div>
+
+      <!-- Homepage -->
+      <label class="toggle-row" for="homepage_enabled">
+        <input type="checkbox" id="homepage_enabled" onchange="toggleSub('homepage_enabled', 'homepage-sub')">
+        <div>
+          <div class="toggle-label">Homepage dashboard <span id="hp-badge"></span></div>
+          <div class="toggle-desc">Generates Homepage services.yaml snippets for new services.</div>
+        </div>
+      </label>
+      <div class="toggle-sub hidden" id="homepage-sub" style="padding-top:12px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Groups <span class="hint">(shown in the group dropdown when creating a service)</span></label>
+          <div class="list-rows" id="group-rows"></div>
+          <button class="btn-add" onclick="addGroupRow('')">+ Add group</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Step 6: Review & create ────────────────────────────────────────── -->
+    <div class="step" id="step-6">
+      <div class="step-title">Review &amp; create</div>
+      <div class="step-desc">
+        This is the config that will be written to <code>config.yaml</code>.
+        You can edit it at any time after setup.
+      </div>
+
+      <div class="yaml-preview" id="yaml-preview"></div>
+      <div class="error-msg" id="setup-error" style="margin-top:10px;"></div>
+    </div>
+
+  </div>
+
+  <div class="wizard-nav">
+    <button class="btn-back" id="btn-back" onclick="prevStep()" disabled>Back</button>
+    <button class="btn-next" id="btn-next" onclick="nextStep()">Next</button>
+  </div>
+
+</div>
+
+<script>
+const STEP_LABELS = ['Scan', 'Identity', 'Domains', 'Traefik', 'Integrations', 'Review'];
+const TOTAL_STEPS = 6;
+let currentStep = 1;
+
+// ── Progress bar ───────────────────────────────────────────────────────────────
+function buildProgress() {
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = '';
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-step' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    dot.textContent = i < currentStep ? '✓' : i;
+    dot.title = STEP_LABELS[i - 1];
+    bar.appendChild(dot);
+    if (i < TOTAL_STEPS) {
+      const conn = document.createElement('div');
+      conn.className = 'progress-connector' + (i < currentStep ? ' done' : '');
+      bar.appendChild(conn);
+    }
+  }
+}
+
+// ── Step navigation ────────────────────────────────────────────────────────────
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  document.getElementById('btn-back').disabled = n === 1;
+  document.getElementById('btn-next').textContent = n === TOTAL_STEPS ? 'Create config' : 'Next';
+  buildProgress();
+}
+
+function nextStep() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep === TOTAL_STEPS) { createConfig(); return; }
+  if (currentStep === TOTAL_STEPS - 1) buildYamlPreview();
+  currentStep++;
+  showStep(currentStep);
+}
+
+function prevStep() {
+  if (currentStep === 1) return;
+  currentStep--;
+  showStep(currentStep);
+}
+
+// ── Validation ─────────────────────────────────────────────────────────────────
+function validateStep(n) {
+  if (n === 3) {
+    const domains = collectRows('domain-rows');
+    const ok = domains.length > 0 && domains.every(d => d.trim());
+    document.getElementById('domain-error').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  if (n === 4) {
+    const net = document.getElementById('traefik_network').value.trim();
+    const ep  = document.getElementById('traefik_entrypoint').value.trim();
+    const cr  = document.getElementById('traefik_cert_resolver').value.trim();
+    const ok  = net && ep && cr;
+    document.getElementById('traefik-error').style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+  return true;
+}
+
+// ── List row helpers ───────────────────────────────────────────────────────────
+function addDomainRow(val) {
+  _addListRow('domain-rows', val, 'domain', 'removeDomainRow');
+}
+function removeDomainRow(btn) { btn.closest('.list-row').remove(); }
+
+function addGroupRow(val) {
+  _addListRow('group-rows', val, 'group', 'removeGroupRow');
+}
+function removeGroupRow(btn) { btn.closest('.list-row').remove(); }
+
+function _addListRow(containerId, val, placeholder, removeFn) {
+  const container = document.getElementById(containerId);
+  const row = document.createElement('div');
+  row.className = 'list-row';
+  row.innerHTML = `
+    <input type="text" placeholder="${placeholder}" value="${_esc(val)}">
+    <button class="btn-remove" onclick="${removeFn}(this)" title="Remove">&times;</button>
+  `;
+  container.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function collectRows(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} input`))
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+function _esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+function toggleSub(checkId, subId) {
+  const checked = document.getElementById(checkId).checked;
+  document.getElementById(subId).classList.toggle('hidden', !checked);
+}
+
+// ── YAML preview ───────────────────────────────────────────────────────────────
+function buildYamlPreview() {
+  const data = collectFormData();
+  const groups = data.homepage.groups;
+  const ttlOpts = [1, 4, 8, 24];
+
+  let yaml = `homelab:\n  name: "${data.homelab_name}"\n\n`;
+
+  yaml += `traefik:\n`;
+  yaml += `  network: "${data.traefik.network}"\n`;
+  yaml += `  cert_resolver: "${data.traefik.cert_resolver}"\n`;
+  yaml += `  entrypoint: "${data.traefik.entrypoint}"\n`;
+  if (data.traefik.auth_middleware)
+    yaml += `  auth_middleware: "${data.traefik.auth_middleware}"\n`;
+  yaml += '\n';
+
+  yaml += `domains:\n`;
+  data.domains.forEach(d => { yaml += `  - ${d}\n`; });
+  yaml += '\n';
+
+  yaml += `autokuma:\n  enabled: ${data.autokuma.enabled}\n\n`;
+
+  yaml += `homepage:\n  enabled: ${data.homepage.enabled}\n`;
+  if (data.homepage.enabled && groups.length) {
+    yaml += `  groups:\n`;
+    groups.forEach(g => { yaml += `    - ${g}\n`; });
+  }
+  yaml += '\n';
+
+  yaml += `sandbox:\n  default_ttl_hours: 4\n  max_sandboxes: 10\n  ttl_options: [1, 4, 8, 24]\n\n`;
+
+  yaml += `security:\n  suppress_auth_warning: false\n`;
+
+  document.getElementById('yaml-preview').textContent = yaml;
+}
+
+// ── Collect all form data ──────────────────────────────────────────────────────
+function collectFormData() {
+  return {
+    homelab_name: document.getElementById('homelab_name').value.trim() || 'My Homelab',
+    domains: collectRows('domain-rows'),
+    traefik: {
+      network:         document.getElementById('traefik_network').value.trim(),
+      entrypoint:      document.getElementById('traefik_entrypoint').value.trim(),
+      cert_resolver:   document.getElementById('traefik_cert_resolver').value.trim(),
+      auth_middleware: document.getElementById('traefik_auth').value.trim(),
+    },
+    autokuma: { enabled: document.getElementById('autokuma_enabled').checked },
+    homepage: {
+      enabled: document.getElementById('homepage_enabled').checked,
+      groups:  collectRows('group-rows'),
+    },
+  };
+}
+
+// ── Create config ──────────────────────────────────────────────────────────────
+async function createConfig() {
+  const btn = document.getElementById('btn-next');
+  btn.textContent = 'Creating...';
+  btn.disabled = true;
+
+  const errEl = document.getElementById('setup-error');
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(collectFormData()),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Failed to write config.';
+      errEl.style.display = 'block';
+      btn.textContent = 'Create config';
+      btn.disabled = false;
+      return;
+    }
+    window.location.href = '/';
+  } catch (e) {
+    errEl.textContent = 'Network error: ' + e.message;
+    errEl.style.display = 'block';
+    btn.textContent = 'Create config';
+    btn.disabled = false;
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+(function init() {
+  buildProgress();
+
+  // Step 1: scan results
+  const results = document.getElementById('scan-results');
+
+  function scanItem(label, detected, detail) {
+    const el = document.createElement('div');
+    el.className = 'scan-item';
+    el.innerHTML = `
+      <span class="scan-item-label">${label}</span>
+      <span class="${detected ? 'scan-status-ok' : 'scan-status-no'}">
+        ${detected ? (detail ? 'Detected — ' + detail : 'Detected') : 'Not detected — using defaults'}
+      </span>`;
+    results.appendChild(el);
+  }
+
+  const tr = SCAN.traefik;
+  scanItem('Docker', SCAN.docker_available, SCAN.docker_available ? 'socket accessible' : '');
+  scanItem('Traefik', tr.detected, tr.network ? 'network: ' + tr.network : '');
+  scanItem('AutoKuma', SCAN.autokuma.detected);
+  scanItem('Homepage', SCAN.homepage.detected);
+
+  if (!SCAN.docker_available) {
+    document.getElementById('scan-note').textContent =
+      'Docker socket not accessible — all fields will use generic defaults. ' +
+      'Ensure the Docker socket is mounted if you want auto-detection.';
+  }
+
+  // Step 4: Traefik badges and pre-fill
+  const trBadge = document.getElementById('traefik-badge');
+  trBadge.innerHTML = tr.detected
+    ? '<span class="detected-badge">Detected</span>'
+    : '<span class="not-detected-badge">Not detected</span>';
+
+  if (tr.network)       document.getElementById('traefik_network').value     = tr.network;
+  if (tr.entrypoint)    document.getElementById('traefik_entrypoint').value  = tr.entrypoint;
+  if (tr.cert_resolver) document.getElementById('traefik_cert_resolver').value = tr.cert_resolver;
+
+  // Populate network datalist
+  const dl = document.getElementById('network-suggestions');
+  (tr.networks_available || []).forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n;
+    dl.appendChild(opt);
+  });
+
+  // Step 5: AutoKuma & Homepage pre-check
+  const kumaBadge = document.getElementById('kuma-badge');
+  kumaBadge.innerHTML = SCAN.autokuma.detected
+    ? '<span class="detected-badge">Detected</span>'
+    : '<span class="not-detected-badge">Not detected</span>';
+
+  const hpBadge = document.getElementById('hp-badge');
+  hpBadge.innerHTML = SCAN.homepage.detected
+    ? '<span class="detected-badge">Detected</span>'
+    : '<span class="not-detected-badge">Not detected</span>';
+
+  if (SCAN.autokuma.detected) {
+    document.getElementById('autokuma_enabled').checked = true;
+    document.getElementById('autokuma-sub').classList.remove('hidden');
+  }
+  if (SCAN.homepage.detected) {
+    document.getElementById('homepage_enabled').checked = true;
+    document.getElementById('homepage-sub').classList.remove('hidden');
+    // Seed with common groups
+    ['Services', 'Media', 'Monitoring', 'Utilities'].forEach(g => addGroupRow(g));
+  }
+
+  // Seed domain with a placeholder row
+  addDomainRow('');
+})();
+</script>
+
+</body>
+</html>

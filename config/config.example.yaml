@@ -1,37 +1,35 @@
-# homelab-helper configuration
-# Volume-mounted into the container at /config/config.yaml
+# homelab-helper configuration example
+# Copy this file to config.yaml and edit to match your environment.
+# Or delete config.yaml entirely to trigger the first-run setup wizard.
 
 homelab:
-  name: "nightjar homelab"
+  name: "My Homelab"
 
 traefik:
   network: "reverse-proxy"
-  cert_resolver: "cloudflare"
+  cert_resolver: "letsencrypt"
   entrypoint: "websecure"
-  # Name of your auth forward-auth middleware.
+  # Name of your forward-auth middleware (e.g. "tinyauth@file", "authelia@docker").
   # Omit or set to "" to hide the auth checkbox in the UI.
-  auth_middleware: "tinyauth@file"
+  auth_middleware: ""
 
 # List of domains you own. The first entry is the default in the form.
 domains:
-  - nightjar.cc
-  - togneri.net
+  - example.com
 
 autokuma:
   # Set to true if AutoKuma is running on your host.
   # AutoKuma reads kuma.* labels from containers and creates Uptime Kuma monitors automatically.
-  enabled: true
+  enabled: false
 
 homepage:
   # Set to true if you use the Homepage dashboard.
-  enabled: true
+  enabled: false
   groups:
     - Infrastructure
     - Monitoring
     - Media
     - Utilities
-    - Networking
-    - Download
 
 sandbox:
   # Default TTL shown in the sandbox create form (hours)
@@ -43,5 +41,5 @@ sandbox:
 
 security:
   # Set to true once you have confirmed this service is protected
-  # by your reverse proxy (e.g. TinyAuth). Hides the auth warning banner.
+  # by your reverse proxy with authentication. Hides the auth warning banner.
   suppress_auth_warning: false
